@@ -37,7 +37,7 @@ var realReadable = &Profile{
 		"keystore": "your_keystore.jks",
 		"password": "your_password",
 	},
-	HttpConfig: HttpConfig{
+	HttpConfig: &HttpConfig{
 		Params: map[string]string{
 			"block_useragents":      "curl*,lynx*,wget*",
 			"headers":               "Server, Content-Type",
@@ -507,7 +507,7 @@ var realReadable = &Profile{
 }
 
 func TestReadableJQuerryProfileOk(t *testing.T) {
-	parsed, err := preparseToReadable(realParsed)
+	parsed, err := parseToReadable(realParsed)
 	require.NoError(t, err)
 	t.Log(repr.String(parsed))
 	require.Equal(t, parsed, realReadable)

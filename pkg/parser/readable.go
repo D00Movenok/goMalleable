@@ -16,7 +16,7 @@ type Profile struct {
 	CodeSigner map[string]string
 
 	// http-config block
-	HttpConfig HttpConfig
+	HttpConfig *HttpConfig
 
 	// map of dns-beacon profiles
 	DnsBeacon map[string]map[string]string
@@ -243,13 +243,13 @@ func parseOnlyMultiparam(group *group) ([]MultiParam, error) {
 	return parsed, nil
 }
 
-func preparseToReadable(p *profile) (*Profile, error) {
+func parseToReadable(p *profile) (*Profile, error) {
 	var err error
 
 	parsed := &Profile{
 		Globals:    map[string]string{},
 		DnsBeacon:  map[string]map[string]string{},
-		HttpConfig: HttpConfig{},
+		HttpConfig: &HttpConfig{},
 		HttpGet:    map[string]*HttpGet{},
 		HttpPost:   map[string]*HttpPost{},
 		HttpStager: map[string]*HttpStager{},
@@ -275,7 +275,7 @@ func preparseToReadable(p *profile) (*Profile, error) {
 				}
 
 			case "http-config":
-				parsed.HttpConfig = HttpConfig{
+				parsed.HttpConfig = &HttpConfig{
 					Params:  map[string]string{},
 					Headers: [][2]string{},
 				}
