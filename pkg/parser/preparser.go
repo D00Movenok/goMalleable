@@ -1,8 +1,6 @@
 package parser
 
 import (
-	"strings"
-
 	"github.com/alecthomas/participle/v2"
 	"github.com/alecthomas/participle/v2/lexer"
 )
@@ -24,8 +22,8 @@ type entry struct {
 }
 
 type function struct {
-	FuncName string `@Ident`
-	Values   string `( @String* ";" )`
+	FuncName string   `@Ident`
+	Values   []string `( @String* ";" )`
 }
 
 type setVar struct {
@@ -52,8 +50,9 @@ var (
 	)
 )
 
-func Parse(data string) (*profile, error) {
+// preparse string to profile structure for further structurize
+func preparse(data string) (*profile, error) {
 	p := &profile{}
-	err := parser.Parse("", strings.NewReader(data), p)
+	err := parser.ParseString("", data, p)
 	return p, err
 }
