@@ -6,7 +6,7 @@ import (
 	"github.com/alecthomas/kong"
 	"github.com/alecthomas/repr"
 
-	"github.com/D00Movenok/goMalleable/pkg/parser"
+	parser "github.com/D00Movenok/goMalleable"
 )
 
 var cli struct {
