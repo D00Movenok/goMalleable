@@ -10,7 +10,7 @@ import (
 )
 
 var cli struct {
-	Files []string `arg:"" optional:"" type:"existingfile" help:"Malleable C2 profile files to parse."`
+	Files []string `arg:"" type:"existingfile" help:"Malleable C2 profile files to parse."`
 }
 
 func main() {

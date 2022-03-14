@@ -192,6 +192,16 @@ func getProfileName(name string) string {
 	return profileName
 }
 
+// parse server output format, e.g.
+// server {
+// 	header "Server" "nginx";
+// 	output {
+// 		netbios;
+// 		prepend "content=";
+// 		append "\n<meta name=\"msvalidate.01\" content=\"63E628E67E6AD849F4185FA9AA7ABACA\">\n";
+// 		print;
+// 	}
+// }
 func parseServerOutput(group *group) (*HttpServerOutput, error) {
 	server := &HttpServerOutput{}
 	var err error
@@ -217,6 +227,16 @@ func parseServerOutput(group *group) (*HttpServerOutput, error) {
 	return server, nil
 }
 
+// parse format with only 'set', e.g.
+// https-certificate {
+//     set C "US";
+//     set CN "whatever.com";
+//     set L "California";
+//     set O "whatever LLC.";
+//     set OU "local.org";
+//     set ST "CA";
+//     set validity "365";
+// }
 func parseOnlyParams(group *group) (map[string]string, error) {
 	parsed := map[string]string{}
 	for _, entry := range group.Entries {
@@ -229,6 +249,12 @@ func parseOnlyParams(group *group) (map[string]string, error) {
 	return parsed, nil
 }
 
+// parse multiparams functions, e.g.
+// metadata {
+// 	base64url;
+// 	append ".php";
+// 	parameter "file";
+// }
 func parseOnlyMultiparam(group *group) ([]MultiParam, error) {
 	parsed := []MultiParam{}
 
@@ -243,6 +269,312 @@ func parseOnlyMultiparam(group *group) ([]MultiParam, error) {
 	return parsed, nil
 }
 
+// parse http-config block
+func parseHttpConfig(group *group) (*HttpConfig, error) {
+	hc := &HttpConfig{
+		Params:  map[string]string{},
+		Headers: [][2]string{},
+	}
+
+	for _, entry := range group.Entries {
+		if entry.Param != nil {
+			// "set" params
+			hc.Params[entry.Param.Name] = entry.Param.Value
+		} else if entry.Func != nil && entry.Func.FuncName == "header" {
+			// "header" params
+			if len(entry.Func.Values) != 2 {
+				return nil, errors.New("header: have bad params " + repr.String(entry.Func))
+			}
+			hc.Headers = append(hc.Headers,
+				[2]string{entry.Func.Values[0], entry.Func.Values[1]})
+		} else {
+			return nil, errors.New("unknown entry: " + repr.String(entry))
+		}
+	}
+
+	return hc, nil
+}
+
+// parse http-get blocks
+func parseHttpGet(group *group) (*HttpGet, error) {
+	var err error
+	hg := &HttpGet{
+		Params: map[string]string{},
+		Client: &HttpGetClient{
+			Headers:   [][2]string{},
+			URIParams: [][2]string{},
+			Metadata:  []MultiParam{},
+		},
+		Server: &HttpServerOutput{
+			Headers: [][2]string{},
+			Output:  []MultiParam{},
+		},
+	}
+
+	for _, entry := range group.Entries {
+		if entry.Param != nil {
+			// "set" params
+			hg.Params[entry.Param.Name] = entry.Param.Value
+		} else if entry.Group != nil {
+			// parse blocks
+			switch entry.Group.Type {
+			case "client":
+				for _, subEntry := range entry.Group.Entries {
+					if subEntry.Func != nil && subEntry.Func.FuncName == "header" {
+						// "header" params
+						if len(subEntry.Func.Values) != 2 {
+							return nil, errors.New("header: have bad params " + repr.String(subEntry.Func))
+						}
+						hg.Client.Headers = append(hg.Client.Headers,
+							[2]string{subEntry.Func.Values[0], subEntry.Func.Values[1]})
+					} else if subEntry.Func != nil && subEntry.Func.FuncName == "parameter" {
+						// "parameter" params
+						if len(subEntry.Func.Values) != 2 {
+							return nil, errors.New("header: have bad params " + repr.String(subEntry.Func))
+						}
+						hg.Client.URIParams = append(hg.Client.URIParams,
+							[2]string{subEntry.Func.Values[0], subEntry.Func.Values[1]})
+					} else if subEntry.Group != nil && subEntry.Group.Type == "metadata" {
+						// "metadata" block
+						hg.Client.Metadata, err = parseOnlyMultiparam(subEntry.Group)
+						if err != nil {
+							return nil, err
+						}
+					} else {
+						return nil, errors.New("unknown entry: " + repr.String(subEntry))
+					}
+				}
+
+			case "server":
+				hg.Server, err = parseServerOutput(entry.Group)
+				if err != nil {
+					return nil, err
+				}
+
+			default:
+				return nil, errors.New("unknown block: " + repr.String(entry.Group))
+			}
+		}
+	}
+
+	return hg, nil
+}
+
+// parse http-post blocks
+func parseHttpPost(group *group) (*HttpPost, error) {
+	var err error
+	hp := &HttpPost{
+		Params: map[string]string{},
+		Client: &HttpPostClient{
+			Headers:   [][2]string{},
+			URIParams: [][2]string{},
+			Output:    []MultiParam{},
+			ID:        []MultiParam{},
+		},
+		Server: &HttpServerOutput{
+			Headers: [][2]string{},
+			Output:  []MultiParam{},
+		},
+	}
+
+	for _, entry := range group.Entries {
+		if entry.Param != nil {
+			// "set" params
+			hp.Params[entry.Param.Name] = entry.Param.Value
+		} else if entry.Group != nil {
+			// parse blocks
+			switch entry.Group.Type {
+			case "client":
+				for _, subEntry := range entry.Group.Entries {
+					if subEntry.Func != nil && subEntry.Func.FuncName == "header" {
+						// "header" params
+						if len(subEntry.Func.Values) != 2 {
+							return nil, errors.New("header: have bad params " + repr.String(subEntry.Func))
+						}
+						hp.Client.Headers = append(hp.Client.Headers,
+							[2]string{subEntry.Func.Values[0], subEntry.Func.Values[1]})
+					} else if subEntry.Func != nil && subEntry.Func.FuncName == "parameter" {
+						// "parameter" params
+						if len(subEntry.Func.Values) != 2 {
+							return nil, errors.New("header: have bad params " + repr.String(subEntry.Func))
+						}
+						hp.Client.URIParams = append(hp.Client.URIParams,
+							[2]string{subEntry.Func.Values[0], subEntry.Func.Values[1]})
+					} else if subEntry.Group != nil && subEntry.Group.Type == "id" {
+						// "id" block
+						hp.Client.ID, err = parseOnlyMultiparam(subEntry.Group)
+						if err != nil {
+							return nil, err
+						}
+					} else if subEntry.Group != nil && subEntry.Group.Type == "output" {
+						// "output" block
+						hp.Client.Output, err = parseOnlyMultiparam(subEntry.Group)
+						if err != nil {
+							return nil, err
+						}
+					} else {
+						return nil, errors.New("unknown entry: " + repr.String(subEntry))
+					}
+				}
+
+			case "server":
+				hp.Server, err = parseServerOutput(entry.Group)
+				if err != nil {
+					return nil, err
+				}
+
+			default:
+				return nil, errors.New("unknown block: " + repr.String(entry.Group))
+			}
+		}
+	}
+
+	return hp, nil
+}
+
+// parse http-stager blocks
+func parseHttpStager(group *group) (*HttpStager, error) {
+	var err error
+	hs := &HttpStager{
+		Params: map[string]string{},
+		Client: &HttpStagerClient{
+			Headers:   [][2]string{},
+			URIParams: [][2]string{},
+		},
+		Server: &HttpServerOutput{
+			Headers: [][2]string{},
+			Output:  []MultiParam{},
+		},
+	}
+
+	for _, entry := range group.Entries {
+		if entry.Param != nil {
+			// "set" params
+			hs.Params[entry.Param.Name] = entry.Param.Value
+		} else if entry.Group != nil {
+			// parse blocks
+			switch entry.Group.Type {
+			case "client":
+				for _, subEntry := range entry.Group.Entries {
+					if subEntry.Func != nil && subEntry.Func.FuncName == "header" {
+						// "header" params
+						if len(subEntry.Func.Values) != 2 {
+							return nil, errors.New("header: have bad params " + repr.String(subEntry.Func))
+						}
+						hs.Client.Headers = append(hs.Client.Headers,
+							[2]string{subEntry.Func.Values[0], subEntry.Func.Values[1]})
+					} else if subEntry.Func != nil && subEntry.Func.FuncName == "parameter" {
+						// "parameter" params
+						if len(subEntry.Func.Values) != 2 {
+							return nil, errors.New("header: have bad params " + repr.String(subEntry.Func))
+						}
+						hs.Client.URIParams = append(hs.Client.URIParams,
+							[2]string{subEntry.Func.Values[0], subEntry.Func.Values[1]})
+					} else {
+						return nil, errors.New("unknown entry: " + repr.String(subEntry))
+					}
+				}
+
+			case "server":
+				hs.Server, err = parseServerOutput(entry.Group)
+				if err != nil {
+					return nil, err
+				}
+
+			default:
+				return nil, errors.New("unknown block: " + repr.String(entry.Group))
+			}
+		}
+	}
+
+	return hs, nil
+}
+
+// parse "stage" block
+func parseStage(group *group) (*Stage, error) {
+	var err error
+	s := &Stage{
+		Params:       map[string]string{},
+		String:       []string{},
+		Data:         []string{},
+		Stringw:      []string{},
+		TransformX86: []MultiParam{},
+		TransformX64: []MultiParam{},
+	}
+
+	for _, entry := range group.Entries {
+		if entry.Param != nil {
+			// "set" params
+			s.Params[entry.Param.Name] = entry.Param.Value
+		} else if entry.Func != nil && entry.Func.FuncName == "string" {
+			// "string" params
+			s.String = append(s.String, entry.Func.Values[0])
+		} else if entry.Func != nil && entry.Func.FuncName == "data" {
+			// "data" params
+			s.Data = append(s.Data, entry.Func.Values[0])
+		} else if entry.Func != nil && entry.Func.FuncName == "stringw" {
+			// "stringw" params
+			s.Stringw = append(s.Stringw, entry.Func.Values[0])
+		} else if entry.Group != nil && entry.Group.Type == "transform-x86" {
+			// "transform-x86" block
+			s.TransformX86, err = parseOnlyMultiparam(entry.Group)
+			if err != nil {
+				return nil, err
+			}
+		} else if entry.Group != nil && entry.Group.Type == "transform-x64" {
+			// "transform-x64" block
+			s.TransformX64, err = parseOnlyMultiparam(entry.Group)
+			if err != nil {
+				return nil, err
+			}
+		} else {
+			return nil, errors.New("unknown entry: " + repr.String(entry))
+		}
+	}
+
+	return s, nil
+}
+
+// process-inject block
+func parseProcessInject(group *group) (*ProcessInject, error) {
+	var err error
+	pi := &ProcessInject{
+		Params:       map[string]string{},
+		TransformX86: []MultiParam{},
+		TransformX64: []MultiParam{},
+	}
+
+	for _, entry := range group.Entries {
+		if entry.Param != nil {
+			// "set" params
+			pi.Params[entry.Param.Name] = entry.Param.Value
+		} else if entry.Group != nil && entry.Group.Type == "transform-x86" {
+			// "transform-x86" block
+			pi.TransformX86, err = parseOnlyMultiparam(entry.Group)
+			if err != nil {
+				return nil, err
+			}
+		} else if entry.Group != nil && entry.Group.Type == "transform-x64" {
+			// "transform-x64" block
+			pi.TransformX64, err = parseOnlyMultiparam(entry.Group)
+			if err != nil {
+				return nil, err
+			}
+		} else if entry.Group != nil && entry.Group.Type == "execute" {
+			// "execute" block
+			pi.Execute, err = parseOnlyMultiparam(entry.Group)
+			if err != nil {
+				return nil, err
+			}
+		} else {
+			return nil, errors.New("unknown entry: " + repr.String(entry))
+		}
+	}
+
+	return pi, err
+}
+
+// parse profile stucture to easy-to-read Profile structure
 func parseToReadable(p *profile) (*Profile, error) {
 	var err error
 
@@ -257,289 +589,81 @@ func parseToReadable(p *profile) (*Profile, error) {
 
 	var profileName string
 
-	for _, entry1 := range p.Entries {
-		if entry1.Param != nil {
-			parsed.Globals[entry1.Param.Name] = entry1.Param.Value
-		} else if entry1.Group != nil {
-			switch entry1.Group.Type {
+	for _, entry := range p.Entries {
+		if entry.Param != nil {
+			// global "set" params
+			parsed.Globals[entry.Param.Name] = entry.Param.Value
+		} else if entry.Group != nil {
+			switch entry.Group.Type {
 			case "https-certificate":
-				parsed.HttpsCertificate, err = parseOnlyParams(entry1.Group)
+				parsed.HttpsCertificate, err = parseOnlyParams(entry.Group)
 				if err != nil {
 					return nil, err
 				}
 
 			case "code-signer":
-				parsed.CodeSigner, err = parseOnlyParams(entry1.Group)
+				parsed.CodeSigner, err = parseOnlyParams(entry.Group)
 				if err != nil {
 					return nil, err
 				}
 
 			case "http-config":
-				parsed.HttpConfig = &HttpConfig{
-					Params:  map[string]string{},
-					Headers: [][2]string{},
-				}
-
-				for _, entry2 := range entry1.Group.Entries {
-					if entry2.Param != nil {
-						parsed.HttpConfig.Params[entry2.Param.Name] = entry2.Param.Value
-					} else if entry2.Func != nil && entry2.Func.FuncName == "header" {
-						if len(entry2.Func.Values) != 2 {
-							return nil, errors.New("header: have bad params " + repr.String(entry2.Func))
-						}
-						parsed.HttpConfig.Headers = append(parsed.HttpConfig.Headers,
-							[2]string{entry2.Func.Values[0], entry2.Func.Values[1]})
-					} else {
-						return nil, errors.New("unknown entry: " + repr.String(entry2))
-					}
+				parsed.HttpConfig, err = parseHttpConfig(entry.Group)
+				if err != nil {
+					return nil, err
 				}
 
 			case "dns-beacon":
-				profileName = getProfileName(entry1.Group.Name)
-				parsed.DnsBeacon[profileName], err = parseOnlyParams(entry1.Group)
+				profileName = getProfileName(entry.Group.Name)
+				parsed.DnsBeacon[profileName], err = parseOnlyParams(entry.Group)
 				if err != nil {
 					return nil, err
 				}
 
 			case "http-get":
-				profileName = getProfileName(entry1.Group.Name)
-
-				parsed.HttpGet[profileName] = &HttpGet{
-					Params: map[string]string{},
-					Client: &HttpGetClient{
-						Headers:   [][2]string{},
-						URIParams: [][2]string{},
-						Metadata:  []MultiParam{},
-					},
-					Server: &HttpServerOutput{
-						Headers: [][2]string{},
-						Output:  []MultiParam{},
-					},
+				profileName = getProfileName(entry.Group.Name)
+				parsed.HttpGet[profileName], err = parseHttpGet(entry.Group)
+				if err != nil {
+					return nil, err
 				}
 
-				for _, entry2 := range entry1.Group.Entries {
-					if entry2.Param != nil {
-						parsed.HttpGet[profileName].Params[entry2.Param.Name] = entry2.Param.Value
-					} else if entry2.Group != nil {
-						switch entry2.Group.Type {
-						case "client":
-							for _, entry3 := range entry2.Group.Entries {
-								if entry3.Func != nil && entry3.Func.FuncName == "header" {
-									if len(entry3.Func.Values) != 2 {
-										return nil, errors.New("header: have bad params " + repr.String(entry3.Func))
-									}
-									parsed.HttpGet[profileName].Client.Headers = append(parsed.HttpGet[profileName].Client.Headers,
-										[2]string{entry3.Func.Values[0], entry3.Func.Values[1]})
-								} else if entry3.Func != nil && entry3.Func.FuncName == "parameter" {
-									if len(entry3.Func.Values) != 2 {
-										return nil, errors.New("header: have bad params " + repr.String(entry3.Func))
-									}
-									parsed.HttpGet[profileName].Client.URIParams = append(parsed.HttpGet[profileName].Client.URIParams,
-										[2]string{entry3.Func.Values[0], entry3.Func.Values[1]})
-								} else if entry3.Group != nil && entry3.Group.Type == "metadata" {
-									parsed.HttpGet[profileName].Client.Metadata, err = parseOnlyMultiparam(entry3.Group)
-									if err != nil {
-										return nil, err
-									}
-								} else {
-									return nil, errors.New("unknown entry: " + repr.String(entry3))
-								}
-							}
-						case "server":
-							parsed.HttpGet[profileName].Server, err = parseServerOutput(entry2.Group)
-							if err != nil {
-								return nil, err
-							}
-						default:
-							return nil, errors.New("unknown block: " + repr.String(entry2.Group))
-						}
-					}
-				}
 			case "http-post":
-				profileName = getProfileName(entry1.Group.Name)
-
-				parsed.HttpPost[profileName] = &HttpPost{
-					Params: map[string]string{},
-					Client: &HttpPostClient{
-						Headers:   [][2]string{},
-						URIParams: [][2]string{},
-						Output:    []MultiParam{},
-						ID:        []MultiParam{},
-					},
-					Server: &HttpServerOutput{
-						Headers: [][2]string{},
-						Output:  []MultiParam{},
-					},
-				}
-
-				for _, entry2 := range entry1.Group.Entries {
-					if entry2.Param != nil {
-						parsed.HttpPost[profileName].Params[entry2.Param.Name] = entry2.Param.Value
-					} else if entry2.Group != nil {
-						switch entry2.Group.Type {
-						case "client":
-							for _, entry3 := range entry2.Group.Entries {
-								if entry3.Func != nil && entry3.Func.FuncName == "header" {
-									if len(entry3.Func.Values) != 2 {
-										return nil, errors.New("header: have bad params " + repr.String(entry3.Func))
-									}
-									parsed.HttpPost[profileName].Client.Headers = append(parsed.HttpPost[profileName].Client.Headers,
-										[2]string{entry3.Func.Values[0], entry3.Func.Values[1]})
-								} else if entry3.Func != nil && entry3.Func.FuncName == "parameter" {
-									if len(entry3.Func.Values) != 2 {
-										return nil, errors.New("header: have bad params " + repr.String(entry3.Func))
-									}
-									parsed.HttpPost[profileName].Client.URIParams = append(parsed.HttpPost[profileName].Client.URIParams,
-										[2]string{entry3.Func.Values[0], entry3.Func.Values[1]})
-								} else if entry3.Group != nil && entry3.Group.Type == "id" {
-									parsed.HttpPost[profileName].Client.ID, err = parseOnlyMultiparam(entry3.Group)
-									if err != nil {
-										return nil, err
-									}
-								} else if entry3.Group != nil && entry3.Group.Type == "output" {
-									parsed.HttpPost[profileName].Client.Output, err = parseOnlyMultiparam(entry3.Group)
-									if err != nil {
-										return nil, err
-									}
-								} else {
-									return nil, errors.New("unknown entry: " + repr.String(entry3))
-								}
-							}
-						case "server":
-							parsed.HttpPost[profileName].Server, err = parseServerOutput(entry2.Group)
-							if err != nil {
-								return nil, err
-							}
-						default:
-							return nil, errors.New("unknown block: " + repr.String(entry2.Group))
-						}
-					}
+				profileName = getProfileName(entry.Group.Name)
+				parsed.HttpPost[profileName], err = parseHttpPost(entry.Group)
+				if err != nil {
+					return nil, err
 				}
 
 			case "http-stager":
-				profileName = getProfileName(entry1.Group.Name)
-
-				parsed.HttpStager[profileName] = &HttpStager{
-					Params: map[string]string{},
-					Client: &HttpStagerClient{
-						Headers:   [][2]string{},
-						URIParams: [][2]string{},
-					},
-					Server: &HttpServerOutput{
-						Headers: [][2]string{},
-						Output:  []MultiParam{},
-					},
-				}
-
-				for _, entry2 := range entry1.Group.Entries {
-					if entry2.Param != nil {
-						parsed.HttpStager[profileName].Params[entry2.Param.Name] = entry2.Param.Value
-					} else if entry2.Group != nil {
-						switch entry2.Group.Type {
-						case "client":
-							for _, entry3 := range entry2.Group.Entries {
-								if entry3.Func != nil && entry3.Func.FuncName == "header" {
-									if len(entry3.Func.Values) != 2 {
-										return nil, errors.New("header: have bad params " + repr.String(entry3.Func))
-									}
-									parsed.HttpStager[profileName].Client.Headers = append(parsed.HttpStager[profileName].Client.Headers,
-										[2]string{entry3.Func.Values[0], entry3.Func.Values[1]})
-								} else if entry3.Func != nil && entry3.Func.FuncName == "parameter" {
-									if len(entry3.Func.Values) != 2 {
-										return nil, errors.New("header: have bad params " + repr.String(entry3.Func))
-									}
-									parsed.HttpStager[profileName].Client.URIParams = append(parsed.HttpStager[profileName].Client.URIParams,
-										[2]string{entry3.Func.Values[0], entry3.Func.Values[1]})
-								} else {
-									return nil, errors.New("unknown entry: " + repr.String(entry3))
-								}
-							}
-						case "server":
-							parsed.HttpStager[profileName].Server, err = parseServerOutput(entry2.Group)
-							if err != nil {
-								return nil, err
-							}
-						default:
-							return nil, errors.New("unknown block: " + repr.String(entry2.Group))
-						}
-					}
+				profileName = getProfileName(entry.Group.Name)
+				parsed.HttpStager[profileName], err = parseHttpStager(entry.Group)
+				if err != nil {
+					return nil, err
 				}
 
 			case "stage":
-				parsed.Stage = &Stage{
-					Params:       map[string]string{},
-					String:       []string{},
-					Data:         []string{},
-					Stringw:      []string{},
-					TransformX86: []MultiParam{},
-					TransformX64: []MultiParam{},
-				}
-
-				for _, entry2 := range entry1.Group.Entries {
-					if entry2.Param != nil {
-						parsed.Stage.Params[entry2.Param.Name] = entry2.Param.Value
-					} else if entry2.Func != nil && entry2.Func.FuncName == "string" {
-						parsed.Stage.String = append(parsed.Stage.String, entry2.Func.Values[0])
-					} else if entry2.Func != nil && entry2.Func.FuncName == "data" {
-						parsed.Stage.Data = append(parsed.Stage.Data, entry2.Func.Values[0])
-					} else if entry2.Func != nil && entry2.Func.FuncName == "stringw" {
-						parsed.Stage.Stringw = append(parsed.Stage.Stringw, entry2.Func.Values[0])
-					} else if entry2.Group != nil && entry2.Group.Type == "transform-x86" {
-						parsed.Stage.TransformX86, err = parseOnlyMultiparam(entry2.Group)
-						if err != nil {
-							return nil, err
-						}
-					} else if entry2.Group != nil && entry2.Group.Type == "transform-x64" {
-						parsed.Stage.TransformX64, err = parseOnlyMultiparam(entry2.Group)
-						if err != nil {
-							return nil, err
-						}
-					} else {
-						return nil, errors.New("unknown entry: " + repr.String(entry2))
-					}
+				parsed.Stage, err = parseStage(entry.Group)
+				if err != nil {
+					return nil, err
 				}
 
 			case "process-inject":
-				parsed.ProcessInject = &ProcessInject{
-					Params:       map[string]string{},
-					TransformX86: []MultiParam{},
-					TransformX64: []MultiParam{},
-				}
-
-				for _, entry2 := range entry1.Group.Entries {
-					if entry2.Param != nil {
-						parsed.ProcessInject.Params[entry2.Param.Name] = entry2.Param.Value
-					} else if entry2.Group != nil && entry2.Group.Type == "transform-x86" {
-						parsed.ProcessInject.TransformX86, err = parseOnlyMultiparam(entry2.Group)
-						if err != nil {
-							return nil, err
-						}
-					} else if entry2.Group != nil && entry2.Group.Type == "transform-x64" {
-						parsed.ProcessInject.TransformX64, err = parseOnlyMultiparam(entry2.Group)
-						if err != nil {
-							return nil, err
-						}
-					} else if entry2.Group != nil && entry2.Group.Type == "execute" {
-						parsed.ProcessInject.Execute, err = parseOnlyMultiparam(entry2.Group)
-						if err != nil {
-							return nil, err
-						}
-					} else {
-						return nil, errors.New("unknown entry: " + repr.String(entry2))
-					}
+				parsed.ProcessInject, err = parseProcessInject(entry.Group)
+				if err != nil {
+					return nil, err
 				}
 
 			case "post-ex":
-				parsed.PostEx, err = parseOnlyParams(entry1.Group)
+				parsed.PostEx, err = parseOnlyParams(entry.Group)
 				if err != nil {
 					return nil, err
 				}
 
 			default:
-				return nil, errors.New("unknown block: " + repr.String(entry1.Group))
+				return nil, errors.New("unknown block: " + repr.String(entry.Group))
 			}
 		} else {
-			return nil, errors.New("unknown entry: " + repr.String(entry1))
+			return nil, errors.New("unknown entry: " + repr.String(entry))
 		}
 	}
 
