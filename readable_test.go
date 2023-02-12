@@ -44,14 +44,14 @@ var realReadable = &Profile{
 			"trust_x_forwarded_for": "false",
 		},
 		Headers: [][2]string{
-			[2]string{
+			{
 				"Server",
 				"nginx",
 			},
 		},
 	},
 	DnsBeacon: map[string]map[string]string{
-		"default": map[string]string{
+		"default": {
 			"beacon":             "d-bx.",
 			"dns_idle":           "8.8.8.8",
 			"dns_max_txt":        "220",
@@ -69,23 +69,23 @@ var realReadable = &Profile{
 		},
 	},
 	HttpGet: map[string]*HttpGet{
-		"default": &HttpGet{
+		"default": {
 			Params: map[string]string{
 				"uri": "/login /config /admin",
 			},
 			Client: &HttpGetClient{
 				Headers: [][2]string{
-					[2]string{
+					{
 						"Host",
 						"whatever.com",
 					},
-					[2]string{
+					{
 						"Connection",
 						"close",
 					},
 				},
 				URIParams: [][2]string{
-					[2]string{
+					{
 						"test1",
 						"test2",
 					},
@@ -131,23 +131,23 @@ var realReadable = &Profile{
 				},
 			},
 		},
-		"variant_name_get": &HttpGet{
+		"variant_name_get": {
 			Params: map[string]string{
 				"uri": "/uri1 /uri2 /uri3",
 			},
 			Client: &HttpGetClient{
 				Headers: [][2]string{
-					[2]string{
+					{
 						"Host",
 						"whatever.com",
 					},
-					[2]string{
+					{
 						"Connection",
 						"close",
 					},
 				},
 				URIParams: [][2]string{
-					[2]string{
+					{
 						"test1",
 						"test2",
 					},
@@ -172,7 +172,7 @@ var realReadable = &Profile{
 			},
 			Server: &HttpServerOutput{
 				Headers: [][2]string{
-					[2]string{
+					{
 						"Server",
 						"nginx",
 					},
@@ -201,24 +201,24 @@ var realReadable = &Profile{
 		},
 	},
 	HttpPost: map[string]*HttpPost{
-		"default": &HttpPost{
+		"default": {
 			Params: map[string]string{
 				"uri":  "/Login /Config /Admin",
 				"verb": "GET",
 			},
 			Client: &HttpPostClient{
 				Headers: [][2]string{
-					[2]string{
+					{
 						"Host",
 						"whatever.com",
 					},
-					[2]string{
+					{
 						"Connection",
 						"close",
 					},
 				},
 				URIParams: [][2]string{
-					[2]string{
+					{
 						"test1",
 						"test2",
 					},
@@ -269,18 +269,18 @@ var realReadable = &Profile{
 				},
 			},
 		},
-		"variant_name_post": &HttpPost{
+		"variant_name_post": {
 			Params: map[string]string{
 				"uri":  "/Uri1 /Uri2 /Uri3",
 				"verb": "GET",
 			},
 			Client: &HttpPostClient{
 				Headers: [][2]string{
-					[2]string{
+					{
 						"Host",
 						"whatever.com",
 					},
-					[2]string{
+					{
 						"Connection",
 						"close",
 					},
@@ -334,24 +334,24 @@ var realReadable = &Profile{
 		},
 	},
 	HttpStager: map[string]*HttpStager{
-		"default": &HttpStager{
+		"default": {
 			Params: map[string]string{
 				"uri_x64": "/console",
 				"uri_x86": "/Console",
 			},
 			Client: &HttpStagerClient{
 				Headers: [][2]string{
-					[2]string{
+					{
 						"Host",
 						"whatever.com",
 					},
-					[2]string{
+					{
 						"Connection",
 						"close",
 					},
 				},
 				URIParams: [][2]string{
-					[2]string{
+					{
 						"test1",
 						"test2",
 					},

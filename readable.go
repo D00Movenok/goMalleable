@@ -574,7 +574,7 @@ func parseProcessInject(group *group) (*ProcessInject, error) {
 	return pi, err
 }
 
-// parse profile stucture to easy-to-read Profile structure
+// parse profile structure to easy-to-read Profile structure
 func parseToReadable(p *profile) (*Profile, error) {
 	var err error
 
