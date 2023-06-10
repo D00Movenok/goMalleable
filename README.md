@@ -2,7 +2,7 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Go Report Card](https://goreportcard.com/badge/github.com/D00Movenok/goMalleable)](https://goreportcard.com/report/github.com/D00Movenok/goMalleable)
-[![Tests](https://github.com/D00Movenok/goMalleable/actions/workflows/tests.yml/badge.svg)](https://github.com/D00Movenok/goMalleable/actions/workflows/tests.yml)
+[![Tests](https://github.com/D00Movenok/goMalleable/actions/workflows/test.yml/badge.svg)](https://github.com/D00Movenok/goMalleable/actions/workflows/test.yml)
 [![CodeQL](https://github.com/D00Movenok/goMalleable/actions/workflows/codeql.yml/badge.svg)](https://github.com/D00Movenok/goMalleable/actions/workflows/codeql.yml)
 
 🔎🪲 Malleable C2 profiles parser and assembler written in golang
@@ -15,6 +15,7 @@
 	1. [Parse](#parse)
 	2. [Assembly](#assembly)
 4. [Examples](#examples)
+5. [TODO](#TODO)
 
 ## Introduction
 
@@ -39,13 +40,13 @@ package main
 
 import (
     "os"
-    parser "github.com/D00Movenok/goMalleable"
+    malleable "github.com/D00Movenok/goMalleable"
 )
 
 func main() {
     ...
-    data, _ := os.ReadFile("example.profile")
-    parsed, _ := parser.Parse(string(data))
+    data, _ := os.Open("example.profile")
+    parsed, _ := malleable.Parse(data)
     ...
 }
 ```
@@ -89,3 +90,8 @@ https-certificate {
 | ---- | ----------- |
 | [Link](https://github.com/D00Movenok/goMalleable/tree/main/examples/parse) | Example of profile parsing |
 | [Link](https://github.com/D00Movenok/goMalleable/tree/main/examples/create) | Example of profile creation |
+
+## TODO
+
+- [ ] Use map[Name]Type instead of []Type with Name field
+- [ ] Split URLs by space and orders,blocks by comma

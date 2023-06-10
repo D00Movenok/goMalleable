@@ -1,27 +1,30 @@
 package main
 
 import (
+	"log"
 	"os"
 
-	"github.com/alecthomas/kong"
+	malleable "github.com/D00Movenok/goMalleable"
 	"github.com/alecthomas/repr"
-
-	parser "github.com/D00Movenok/goMalleable"
+	"github.com/spf13/pflag"
 )
 
-var cli struct {
-	Files []string `arg:"" type:"existingfile" help:"Malleable C2 profile files to parse."`
-}
+var (
+	path = pflag.StringP("path", "p", "../testdata/sample.profile", "Path to the Malleable .profile file")
+)
 
 func main() {
-	ctx := kong.Parse(&cli)
-	for _, file := range cli.Files {
-		data, err := os.ReadFile(file)
-		ctx.FatalIfErrorf(err)
+	pflag.Parse()
 
-		parsed, err := parser.Parse(string(data))
-		ctx.FatalIfErrorf(err)
-
-		repr.Println(parsed)
+	data, err := os.Open(*path)
+	if err != nil {
+		log.Fatalf("Can't read file: %s", err)
 	}
+
+	parsed, err := malleable.Parse(data)
+	if err != nil {
+		log.Fatalf("Can't parse profile: %s", err)
+	}
+
+	repr.Println(parsed)
 }

