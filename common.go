@@ -19,6 +19,38 @@ func (b *Boolean) Capture(values []string) error {
 	return nil
 }
 
+type CommaSeparatedList []string
+
+func (l *CommaSeparatedList) Capture(values []string) error {
+	s := strings.Split(values[0], ",")
+	for i := range s {
+		s[i] = strings.TrimSpace(s[i])
+	}
+
+	*l = s
+	return nil
+}
+
+func (l CommaSeparatedList) String() string {
+	return strings.Join(([]string)(l), ",")
+}
+
+type URIs []string
+
+func (l *URIs) Capture(values []string) error {
+	s := strings.Split(values[0], " ")
+	for i := range s {
+		s[i] = strings.TrimSpace(s[i])
+	}
+
+	*l = s
+	return nil
+}
+
+func (l URIs) String() string {
+	return strings.Join(([]string)(l), " ")
+}
+
 type Header struct {
 	Name  string `parser:"@String"`
 	Value string `parser:"@String"`

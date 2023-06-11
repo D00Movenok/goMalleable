@@ -12,7 +12,10 @@ func main() {
 		SleepTime:  1337,
 		Jitter:     50,
 		HTTPGet: []malleable.HTTPGet{{
-			URI: "/test",
+			URI: malleable.URIs{
+				"/test",
+				"/otherURI",
+			},
 			Client: malleable.HTTPGetClient{
 				Headers: []malleable.Header{
 					{

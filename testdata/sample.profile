@@ -1,5 +1,5 @@
 #clean template profile - no comments, cleaned up, hopefully easier to build new profiles off of.
-#updated with 4.3 options
+#updated with 4.7 options
 #xx0hcd
 
 ###Global Options###
@@ -11,6 +11,7 @@ set useragent "Mozilla/5.0 (Windows NT 6.1) AppleWebKit/587.38 (KHTML, like Geck
 set data_jitter "50";
 
 set host_stage "false";
+set headers_remove "Server,X-Forwarded-For";
 
 ###DNS options###
 dns-beacon {
@@ -82,11 +83,11 @@ https-certificate {
     set validity "365";
 }
 
-# code-signer {
-#     set keystore "your_keystore.jks";
-#     set password "your_password";
-#     set alias "server";
-# }
+code-signer {
+    set keystore "your_keystore.jks";
+    set password "your_password";
+    set alias "server";
+}
 
 ###HTTP-Config Block###
 http-config {
@@ -114,22 +115,22 @@ http-get {
 
 	   
         metadata {
-        #base64
-        base64url;
-        #mask;
-        #netbios;
-        #netbiosu;
-        #prepend "TEST123";
-        append ".php";
+            #base64
+            base64url;
+            #mask;
+            #netbios;
+            #netbiosu;
+            #prepend "TEST123";
+            append ".php";
 
-        parameter "file";
-        #header "Cookie";
-        #uri-append;
+            parameter "file";
+            #header "Cookie";
+            #uri-append;
 
-        #print;
-    }
+            #print;
+        }
 
-    parameter "test1" "test2";
+        parameter "test1" "test2";
     }
 
     server {
@@ -143,9 +144,9 @@ http-get {
             #base64url;
             #mask;
             	       
-	    prepend "content=";
+            prepend "content=";
 
-	    append "\n<meta name=\"msvalidate.01\" content=\"63E628E67E6AD849F4185FA9AA7ABACA\">\n";
+            append "\n<meta name=\"msvalidate.01\" content=\"63E628E67E6AD849F4185FA9AA7ABACA\">\n";
 
             print;
         }
@@ -165,19 +166,19 @@ http-get "vatiant_1" {
         header "Connection" "close";
 
 	   
-    metadata {
+        metadata {
 
-        base64url;
-        append ".php";
+            base64url;
+            append ".php";
 
-        parameter "file";
-        #header "Cookie";
-        #uri-append;
+            parameter "file";
+            #header "Cookie";
+            #uri-append;
 
-        #print;
-    }
+            #print;
+        }
 
-    parameter "test1" "test2";
+        parameter "test1" "test2";
     }
 
     server {
@@ -210,12 +211,12 @@ http-post {
         
         output {
             base64url; 
-	    parameter "testParam";
+	        parameter "testParam";
         }
 
         id {
-	    base64url;
-	    parameter "id";
+            base64url;
+            parameter "id";
             #header "ID-Header";
 
         }
@@ -228,9 +229,9 @@ http-post {
         output {
             netbios;	    
 	   
-	    prepend "content=";
+	        prepend "content=";
 
-	    append "\n<meta name=\"msvalidate.01\" content=\"63E628E67E6AD849F4185FA9AA7ABACA\">\n";
+	        append "\n<meta name=\"msvalidate.01\" content=\"63E628E67E6AD849F4185FA9AA7ABACA\">\n";
 
             print;
         }
@@ -246,17 +247,17 @@ http-post "vatiant_1" {
 
     client {
 
-	header "Host" "whatever.com";
-	header "Connection" "close";     
+        header "Host" "whatever.com";
+        header "Connection" "close";     
         
         output {
             base64url; 
-	    parameter "testParam";
+	        parameter "testParam";
         }
 
         id {
-	    base64url;
-	    parameter "id";
+            base64url;
+            parameter "id";
 
         }
     }
@@ -267,9 +268,9 @@ http-post "vatiant_1" {
         output {
             netbios;	    
 	   
-	    prepend "content=";
+            prepend "content=";
 
-	    append "\n<meta name=\n";
+            append "\n<meta name=\n";
 
             print;
         }
@@ -292,13 +293,13 @@ http-stager {
     server {
         #header "Server" "nginx";
 	
-	output {
-	
-	    prepend "content=";
-	    
-	    append "</script>\n";
-	    print;
-	}
+        output {
+        
+            prepend "content=";
+            
+            append "</script>\n";
+            print;
+        }
 
     }
 }
@@ -318,13 +319,13 @@ http-stager "vatiant_1" {
     server {
         #header "Server" "nginx";
 	
-	output {
-	
-	    prepend "content=";
-	    
-	    append "</script>\n";
-	    print;
-	}
+        output {
+        
+            prepend "content=";
+            
+            append "</script>\n";
+            print;
+        }
 
     }
 }
@@ -361,13 +362,13 @@ stage {
         prepend "\x90\x90\x90";
         strrep "ReflectiveLoader" "";
         strrep "beacon.dll" "";
-        }
+    }
 
     transform-x64 {
         prepend "\x90\x90\x90";
         strrep "ReflectiveLoader" "";
         strrep "beacon.x64.dll" "";
-        }
+    }
 
     data "something2";
     string "something1";

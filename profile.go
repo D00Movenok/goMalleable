@@ -1,24 +1,24 @@
 package malleable
 
 type Profile struct {
-	SampleName           string  `parser:"( \"set\" \"sample_name\" @String \";\""`
-	SleepTime            int     `parser:"| \"set\" \"sleeptime\" @Number \";\""`
-	Jitter               int     `parser:"| \"set\" \"jitter\" @Number \";\""`
-	UserAgent            string  `parser:"| \"set\" \"useragent\" @String \";\""`
-	DataJitter           int     `parser:"| \"set\" \"data_jitter\" @Number \";\""`
-	HostStage            Boolean `parser:"| \"set\" \"host_stage\" @Boolean \";\""`
-	Pipename             string  `parser:"| \"set\" \"pipename\" @String \";\""`
-	PipenameStager       string  `parser:"| \"set\" \"pipename_stager\" @String \";\""`
-	SMBFrameHeader       string  `parser:"| \"set\" \"smb_frame_header\" @String \";\""`
-	TCPPort              int     `parser:"| \"set\" \"tcp_port\" @Number \";\""`
-	TCPFrameHeader       string  `parser:"| \"set\" \"tcp_frame_header\" @String \";\""`
-	SSHBanner            string  `parser:"| \"set\" \"ssh_banner\" @String \";\""`
-	SSHPipename          string  `parser:"| \"set\" \"ssh_pipename\" @String \";\""`
-	StealTokenAccessMask string  `parser:"| \"set\" \"steal_token_access_mask\" @String \";\""`
-	TasksMaxSize         string  `parser:"| \"set\" \"tasks_max_size\" @String \";\""`
-	TasksProxyMaxSize    string  `parser:"| \"set\" \"tasks_proxy_max_size\" @String \";\""`
-	TasksDNSProxyMaxSize string  `parser:"| \"set\" \"tasks_dns_proxy_max_size\" @String \";\""`
-	HeadersRemove        string  `parser:"| \"set\" \"headers_remove\" @String \";\""`
+	SampleName           string             `parser:"( \"set\" \"sample_name\" @String \";\""`
+	SleepTime            int                `parser:"| \"set\" \"sleeptime\" @Number \";\""`
+	Jitter               int                `parser:"| \"set\" \"jitter\" @Number \";\""`
+	UserAgent            string             `parser:"| \"set\" \"useragent\" @String \";\""`
+	DataJitter           int                `parser:"| \"set\" \"data_jitter\" @Number \";\""`
+	HostStage            Boolean            `parser:"| \"set\" \"host_stage\" @Boolean \";\""`
+	Pipename             string             `parser:"| \"set\" \"pipename\" @String \";\""`
+	PipenameStager       string             `parser:"| \"set\" \"pipename_stager\" @String \";\""`
+	SMBFrameHeader       string             `parser:"| \"set\" \"smb_frame_header\" @String \";\""`
+	TCPPort              int                `parser:"| \"set\" \"tcp_port\" @Number \";\""`
+	TCPFrameHeader       string             `parser:"| \"set\" \"tcp_frame_header\" @String \";\""`
+	SSHBanner            string             `parser:"| \"set\" \"ssh_banner\" @String \";\""`
+	SSHPipename          string             `parser:"| \"set\" \"ssh_pipename\" @String \";\""`
+	StealTokenAccessMask string             `parser:"| \"set\" \"steal_token_access_mask\" @String \";\""`
+	TasksMaxSize         string             `parser:"| \"set\" \"tasks_max_size\" @String \";\""`
+	TasksProxyMaxSize    string             `parser:"| \"set\" \"tasks_proxy_max_size\" @String \";\""`
+	TasksDNSProxyMaxSize string             `parser:"| \"set\" \"tasks_dns_proxy_max_size\" @String \";\""`
+	HeadersRemove        CommaSeparatedList `parser:"| \"set\" \"headers_remove\" @String \";\""`
 
 	DNSBeacon        []DNSBeacon        `parser:"| \"dns-beacon\" @@"`
 	HTTPSCertificate []HTTPSCertificate `parser:"| \"https-certificate\" @@"`
@@ -79,9 +79,12 @@ func (b HTTPSCertificate) String() string {
 }
 
 type CodeSigner struct {
-	Keystore string `parser:"( \"set\" \"keystore\" @String \";\""`
-	Password string `parser:"| \"set\" \"password\" @String \";\""`
-	Alias    string `parser:"| \"set\" \"alias\" @String \";\")*"`
+	Keystore        string  `parser:"( \"set\" \"keystore\" @String \";\""`
+	Password        string  `parser:"| \"set\" \"password\" @String \";\""`
+	Alias           string  `parser:"| \"set\" \"alias\" @String \";\""`
+	DigestAlgorithm string  `parser:"| \"set\" \"digest_algorithm\" @String \";\""`
+	Timestamp       Boolean `parser:"| \"set\" \"timestamp\" @Boolean \";\""`
+	TimestampURL    string  `parser:"| \"set\" \"timestamp_url\" @String \";\" )*"`
 }
 
 func (b CodeSigner) String() string {
@@ -89,10 +92,10 @@ func (b CodeSigner) String() string {
 }
 
 type HTTPConfig struct {
-	HeadersOrder       string   `parser:"( \"set\" \"headers\" @String \";\""`
-	Headers            []Header `parser:"| \"header\" @@ \";\""`
-	TrustXForwardedFor Boolean  `parser:"| \"set\" \"trust_x_forwarded_for\" @Boolean \";\""`
-	BlockUserAgents    string   `parser:"| \"set\" \"block_useragents\" @String \";\")*"`
+	HeadersOrder       CommaSeparatedList `parser:"( \"set\" \"headers\" @String \";\""`
+	Headers            []Header           `parser:"| \"header\" @@ \";\""`
+	TrustXForwardedFor Boolean            `parser:"| \"set\" \"trust_x_forwarded_for\" @Boolean \";\""`
+	BlockUserAgents    CommaSeparatedList `parser:"| \"set\" \"block_useragents\" @String \";\")*"`
 }
 
 func (b HTTPConfig) String() string {
@@ -103,7 +106,7 @@ type HTTPGet struct {
 	Name string `parser:"@String? \"{\""`
 
 	Verb   string        `parser:"( \"set\" \"verb\" @String \";\""`
-	URI    string        `parser:"| \"set\" \"uri\" @String \";\""`
+	URI    URIs          `parser:"| \"set\" \"uri\" @String \";\""`
 	Client HTTPGetClient `parser:"| \"client\" \"{\" @@ \"}\""`
 	Server HTTPServer    `parser:"| \"server\" \"{\" @@ \"}\" )* \"}\""`
 }
@@ -126,7 +129,7 @@ type HTTPPost struct {
 	Name string `parser:"@String? \"{\""`
 
 	Verb   string         `parser:"( \"set\" \"verb\" @String \";\""`
-	URI    string         `parser:"| \"set\" \"uri\" @String \";\""`
+	URI    URIs           `parser:"| \"set\" \"uri\" @String \";\""`
 	Client HTTPPostClient `parser:"| \"client\" \"{\" @@ \"}\""`
 	Server HTTPServer     `parser:"| \"server\" \"{\" @@ \"}\" )* \"}\""`
 }
@@ -149,8 +152,8 @@ func (b HTTPPostClient) String() string {
 type HTTPStager struct {
 	Name string `parser:"@String? \"{\""`
 
-	URIx86 string           `parser:"( \"set\" \"uri_x86\" @String \";\""`
-	URIx64 string           `parser:"| \"set\" \"uri_x64\" @String \";\""`
+	URIx86 URIs             `parser:"( \"set\" \"uri_x86\" @String \";\""`
+	URIx64 URIs             `parser:"| \"set\" \"uri_x64\" @String \";\""`
 	Client HTTPStagerClient `parser:"| \"client\" \"{\" @@ \"}\""`
 	Server HTTPServer       `parser:"| \"server\" \"{\" @@ \"}\" )* \"}\""`
 }
@@ -178,25 +181,26 @@ func (b HTTPServer) String() string {
 }
 
 type Stage struct {
-	Checksum     int     `parser:"( \"set\" \"checksum\" @Number \";\""`
-	CompileTime  string  `parser:"| \"set\" \"compile_time\" @String \";\""`
-	EntryPoint   int     `parser:"| \"set\" \"entry_point\" @Number \";\""`
-	ImageSizeX86 int     `parser:"| \"set\" \"image_size_x86\" @Number \";\""`
-	ImageSizeX64 int     `parser:"| \"set\" \"image_size_x64\" @Number \";\""`
-	Name         string  `parser:"| \"set\" \"name\" @String \";\""`
-	UseRWX       Boolean `parser:"| \"set\" \"userwx\" @Boolean \";\""`
-	Cleanup      Boolean `parser:"| \"set\" \"cleanup\" @Boolean \";\""`
-	SleepMask    Boolean `parser:"| \"set\" \"sleep_mask\" @Boolean \";\""`
-	StompPE      Boolean `parser:"| \"set\" \"stomppe\" @Boolean \";\""`
-	Obfuscate    Boolean `parser:"| \"set\" \"obfuscate\" @Boolean \";\""`
-	RichHeader   string  `parser:"| \"set\" \"rich_header\" @String \";\""`
-	Allocator    string  `parser:"| \"set\" \"allocator\" @String \";\""`
-	MagicMZX86   string  `parser:"| \"set\" \"magic_mz_x86\" @String \";\""`
-	MagicMZX64   string  `parser:"| \"set\" \"magic_mz_x64\" @String \";\""`
-	MagicPE      string  `parser:"| \"set\" \"magic_pe\" @String \";\""`
-	SmartInject  Boolean `parser:"| \"set\" \"smartinject\" @Boolean \";\""`
-	ModuleX86    string  `parser:"| \"set\" \"module_x86\" @String \";\""`
-	ModuleX64    string  `parser:"| \"set\" \"module_x64\" @String \";\""`
+	Checksum      int     `parser:"( \"set\" \"checksum\" @Number \";\""`
+	CompileTime   string  `parser:"| \"set\" \"compile_time\" @String \";\""`
+	EntryPoint    int     `parser:"| \"set\" \"entry_point\" @Number \";\""`
+	ImageSizeX86  int     `parser:"| \"set\" \"image_size_x86\" @Number \";\""`
+	ImageSizeX64  int     `parser:"| \"set\" \"image_size_x64\" @Number \";\""`
+	Name          string  `parser:"| \"set\" \"name\" @String \";\""`
+	RichHeader    string  `parser:"| \"set\" \"rich_header\" @String \";\""`
+	UseRWX        Boolean `parser:"| \"set\" \"userwx\" @Boolean \";\""`
+	Cleanup       Boolean `parser:"| \"set\" \"cleanup\" @Boolean \";\""`
+	SleepMask     Boolean `parser:"| \"set\" \"sleep_mask\" @Boolean \";\""`
+	StompPE       Boolean `parser:"| \"set\" \"stomppe\" @Boolean \";\""`
+	Obfuscate     Boolean `parser:"| \"set\" \"obfuscate\" @Boolean \";\""`
+	Allocator     string  `parser:"| \"set\" \"allocator\" @String \";\""`
+	MagicMZX86    string  `parser:"| \"set\" \"magic_mz_x86\" @String \";\""`
+	MagicMZX64    string  `parser:"| \"set\" \"magic_mz_x64\" @String \";\""`
+	MagicPE       string  `parser:"| \"set\" \"magic_pe\" @String \";\""`
+	SmartInject   Boolean `parser:"| \"set\" \"smartinject\" @Boolean \";\""`
+	ModuleX86     string  `parser:"| \"set\" \"module_x86\" @String \";\""`
+	ModuleX64     string  `parser:"| \"set\" \"module_x64\" @String \";\""`
+	SyscallMethod string  `parser:"| \"set\" \"syscall_method\" @String \";\""`
 
 	TransformX86 []Function `parser:"| \"transform-x86\" \"{\" @@* \"}\""`
 	TransformX64 []Function `parser:"| \"transform-x64\" \"{\" @@* \"}\""`
@@ -211,10 +215,12 @@ func (b Stage) String() string {
 }
 
 type ProcessInject struct {
-	Allocator string  `parser:"( \"set\" \"allocator\" @String \";\""`
-	MinAlloc  int     `parser:"| \"set\" \"min_alloc\" @Number \";\""`
-	UseRWX    Boolean `parser:"| \"set\" \"userwx\" @Boolean \";\""`
-	StartRWX  Boolean `parser:"| \"set\" \"startrwx\" @Boolean \";\""`
+	Allocator      string  `parser:"( \"set\" \"allocator\" @String \";\""`
+	BOFAllocator   string  `parser:"| \"set\" \"bof_allocator\" @String \";\""`
+	BOFReuseMemory Boolean `parser:"| \"set\" \"bof_reuse_memory\" @Boolean \";\""`
+	MinAlloc       int     `parser:"| \"set\" \"min_alloc\" @Number \";\""`
+	UseRWX         Boolean `parser:"| \"set\" \"userwx\" @Boolean \";\""`
+	StartRWX       Boolean `parser:"| \"set\" \"startrwx\" @Boolean \";\""`
 
 	TransformX86 []Function `parser:"| \"transform-x86\" \"{\" @@* \"}\""`
 	TransformX64 []Function `parser:"| \"transform-x64\" \"{\" @@* \"}\""`
