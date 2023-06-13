@@ -97,6 +97,7 @@ http-config {
     set trust_x_forwarded_for "false";
     
     set block_useragents "curl*,lynx*,wget*";
+    set allow_useragents "Mozilla/*,some-other-ua*";
 }
 
 #set headers_remove "image/x-xbitmap, image/pjpeg, application/vnd";

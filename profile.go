@@ -95,7 +95,8 @@ type HTTPConfig struct {
 	HeadersOrder       CommaSeparatedList `parser:"( \"set\" \"headers\" @String \";\""`
 	Headers            []Header           `parser:"| \"header\" @@ \";\""`
 	TrustXForwardedFor Boolean            `parser:"| \"set\" \"trust_x_forwarded_for\" @Boolean \";\""`
-	BlockUserAgents    CommaSeparatedList `parser:"| \"set\" \"block_useragents\" @String \";\")*"`
+	BlockUserAgents    CommaSeparatedList `parser:"| \"set\" \"block_useragents\" @String \";\""`
+	AllowUserAgents    CommaSeparatedList `parser:"| \"set\" \"allow_useragents\" @String \";\")*"`
 }
 
 func (b HTTPConfig) String() string {
