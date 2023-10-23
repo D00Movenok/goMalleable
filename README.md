@@ -8,6 +8,8 @@
 
 🔎🪲 Malleable C2 profiles parser and assembler library written in golang
 
+**Last supported CobaltStrike version:** 4.8
+
 ## Table of Contents
 
 1. [WARNING](#warning)
@@ -95,3 +97,4 @@ https-certificate {
 ## TODO
 
 - [ ] Use map[Name]Type instead of []Type with Name field
+- [ ] Split @String and @Number in parser

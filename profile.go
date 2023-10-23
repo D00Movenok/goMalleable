@@ -2,22 +2,22 @@ package malleable
 
 type Profile struct {
 	SampleName           string             `parser:"( \"set\" \"sample_name\" @String \";\""`
-	SleepTime            int                `parser:"| \"set\" \"sleeptime\" @Number \";\""`
-	Jitter               int                `parser:"| \"set\" \"jitter\" @Number \";\""`
+	SleepTime            int                `parser:"| \"set\" \"sleeptime\" @String \";\""`
+	Jitter               int                `parser:"| \"set\" \"jitter\" @String \";\""`
 	UserAgent            string             `parser:"| \"set\" \"useragent\" @String \";\""`
-	DataJitter           int                `parser:"| \"set\" \"data_jitter\" @Number \";\""`
+	DataJitter           int                `parser:"| \"set\" \"data_jitter\" @String \";\""`
 	HostStage            Boolean            `parser:"| \"set\" \"host_stage\" @Boolean \";\""`
 	Pipename             string             `parser:"| \"set\" \"pipename\" @String \";\""`
 	PipenameStager       string             `parser:"| \"set\" \"pipename_stager\" @String \";\""`
 	SMBFrameHeader       string             `parser:"| \"set\" \"smb_frame_header\" @String \";\""`
-	TCPPort              int                `parser:"| \"set\" \"tcp_port\" @Number \";\""`
+	TCPPort              int                `parser:"| \"set\" \"tcp_port\" @String \";\""`
 	TCPFrameHeader       string             `parser:"| \"set\" \"tcp_frame_header\" @String \";\""`
 	SSHBanner            string             `parser:"| \"set\" \"ssh_banner\" @String \";\""`
 	SSHPipename          string             `parser:"| \"set\" \"ssh_pipename\" @String \";\""`
-	StealTokenAccessMask string             `parser:"| \"set\" \"steal_token_access_mask\" @String \";\""`
-	TasksMaxSize         string             `parser:"| \"set\" \"tasks_max_size\" @String \";\""`
-	TasksProxyMaxSize    string             `parser:"| \"set\" \"tasks_proxy_max_size\" @String \";\""`
-	TasksDNSProxyMaxSize string             `parser:"| \"set\" \"tasks_dns_proxy_max_size\" @String \";\""`
+	StealTokenAccessMask int                `parser:"| \"set\" \"steal_token_access_mask\" @String \";\""`
+	TasksMaxSize         int                `parser:"| \"set\" \"tasks_max_size\" @String \";\""`
+	TasksProxyMaxSize    int                `parser:"| \"set\" \"tasks_proxy_max_size\" @String \";\""`
+	TasksDNSProxyMaxSize int                `parser:"| \"set\" \"tasks_dns_proxy_max_size\" @String \";\""`
 	HeadersRemove        CommaSeparatedList `parser:"| \"set\" \"headers_remove\" @String \";\""`
 
 	DNSBeacon        []DNSBeacon        `parser:"| \"dns-beacon\" @@"`
@@ -40,10 +40,10 @@ type DNSBeacon struct {
 	Name string `parser:"@String? \"{\""`
 
 	DNSIdle          string `parser:"( \"set\" \"dns_idle\" @String \";\""`
-	DNSMaxTXT        int    `parser:"| \"set\" \"dns_max_txt\" @Number \";\""`
-	DNSSleep         int    `parser:"| \"set\" \"dns_sleep\" @Number \";\""`
-	DNSTTL           int    `parser:"| \"set\" \"dns_ttl\" @Number \";\""`
-	MaxDNS           int    `parser:"| \"set\" \"maxdns\" @Number \";\""`
+	DNSMaxTXT        int    `parser:"| \"set\" \"dns_max_txt\" @String \";\""`
+	DNSSleep         int    `parser:"| \"set\" \"dns_sleep\" @String \";\""`
+	DNSTTL           int    `parser:"| \"set\" \"dns_ttl\" @String \";\""`
+	MaxDNS           int    `parser:"| \"set\" \"maxdns\" @String \";\""`
 	DNSStagerPrepend string `parser:"| \"set\" \"dns_stager_prepend\" @String \";\""`
 	DNSStagerSubhost string `parser:"| \"set\" \"dns_stager_subhost\" @String \";\""`
 	Beacon           string `parser:"| \"set\" \"beacon\" @String \";\""`
@@ -71,7 +71,7 @@ type HTTPSCertificate struct {
 	O        string `parser:"| \"set\" \"O\" @String \";\""`
 	OU       string `parser:"| \"set\" \"OU\" @String \";\""`
 	ST       string `parser:"| \"set\" \"ST\" @String \";\""`
-	Validity int    `parser:"| \"set\" \"validity\" @Number \";\")* \"}\""`
+	Validity int    `parser:"| \"set\" \"validity\" @String \";\")* \"}\""`
 }
 
 func (b HTTPSCertificate) String() string {
@@ -182,11 +182,11 @@ func (b HTTPServer) String() string {
 }
 
 type Stage struct {
-	Checksum      int     `parser:"( \"set\" \"checksum\" @Number \";\""`
+	Checksum      int     `parser:"( \"set\" \"checksum\" @String \";\""`
 	CompileTime   string  `parser:"| \"set\" \"compile_time\" @String \";\""`
-	EntryPoint    int     `parser:"| \"set\" \"entry_point\" @Number \";\""`
-	ImageSizeX86  int     `parser:"| \"set\" \"image_size_x86\" @Number \";\""`
-	ImageSizeX64  int     `parser:"| \"set\" \"image_size_x64\" @Number \";\""`
+	EntryPoint    int     `parser:"| \"set\" \"entry_point\" @String \";\""`
+	ImageSizeX86  int     `parser:"| \"set\" \"image_size_x86\" @String \";\""`
+	ImageSizeX64  int     `parser:"| \"set\" \"image_size_x64\" @String \";\""`
 	Name          string  `parser:"| \"set\" \"name\" @String \";\""`
 	RichHeader    string  `parser:"| \"set\" \"rich_header\" @String \";\""`
 	UseRWX        Boolean `parser:"| \"set\" \"userwx\" @Boolean \";\""`
@@ -219,7 +219,7 @@ type ProcessInject struct {
 	Allocator      string  `parser:"( \"set\" \"allocator\" @String \";\""`
 	BOFAllocator   string  `parser:"| \"set\" \"bof_allocator\" @String \";\""`
 	BOFReuseMemory Boolean `parser:"| \"set\" \"bof_reuse_memory\" @Boolean \";\""`
-	MinAlloc       int     `parser:"| \"set\" \"min_alloc\" @Number \";\""`
+	MinAlloc       int     `parser:"| \"set\" \"min_alloc\" @String \";\""`
 	UseRWX         Boolean `parser:"| \"set\" \"userwx\" @Boolean \";\""`
 	StartRWX       Boolean `parser:"| \"set\" \"startrwx\" @Boolean \";\""`
 
