@@ -16,14 +16,13 @@ func Parse(data io.Reader) (*Profile, error) {
 		{Name: "Punct", Pattern: `[{},;]`},
 		{Name: "Ident", Pattern: `[a-zA-Z0-9_\-]+`},
 
-		{Name: "Boolean", Pattern: `"(true|false)"`},
 		{Name: "String", Pattern: `"(\\"|[^"])*"`},
 	})
 
 	parser := participle.MustBuild[Profile](
 		participle.Lexer(newLexer),
 		participle.Elide("Comment", "Whitespace"),
-		participle.Unquote("String", "Boolean"),
+		participle.Unquote("String"),
 		participle.UseLookahead(5),
 	)
 
