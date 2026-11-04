@@ -4,8 +4,10 @@ type Profile struct {
 	SampleName           string             `parser:"( \"set\" \"sample_name\" @String \";\""`
 	SleepTime            int                `parser:"| \"set\" \"sleeptime\" @String \";\""`
 	Jitter               int                `parser:"| \"set\" \"jitter\" @String \";\""`
+	Sleep                string             `parser:"| \"set\" \"sleep\" @String \";\""`
 	UserAgent            string             `parser:"| \"set\" \"useragent\" @String \";\""`
 	DataJitter           int                `parser:"| \"set\" \"data_jitter\" @String \";\""`
+	CheckinDelay         int                `parser:"| \"set\" \"checkin_delay\" @String \";\""`
 	HostStage            Boolean            `parser:"| \"set\" \"host_stage\" @String \";\""`
 	Pipename             string             `parser:"| \"set\" \"pipename\" @String \";\""`
 	PipenameStager       string             `parser:"| \"set\" \"pipename_stager\" @String \";\""`
@@ -30,7 +32,8 @@ type Profile struct {
 	HTTPStager       []HTTPStager       `parser:"| \"http-stager\" @@"`
 	Stage            Stage              `parser:"| \"stage\" \"{\" @@ \"}\""`
 	ProcessInject    ProcessInject      `parser:"| \"process-inject\" \"{\" @@ \"}\""`
-	PostEx           PostEx             `parser:"| \"post-ex\" \"{\" @@ \"}\" )*"`
+	PostEx           PostEx             `parser:"| \"post-ex\" \"{\" @@ \"}\""`
+	HostProfiles     HTTPHostProfiles   `parser:"| \"http-host-profiles\" \"{\" @@ \"}\" )*"`
 }
 
 func (d Profile) String() string {
@@ -53,17 +56,37 @@ type DNSBeacon struct {
 	GetTXT           string `parser:"| \"set\" \"get_TXT\" @String \";\""`
 	PutMetadata      string `parser:"| \"set\" \"put_metadata\" @String \";\""`
 	PutOutput        string `parser:"| \"set\" \"put_output\" @String \";\""`
-	NSResponse       string `parser:"| \"set\" \"ns_response\" @String \";\")* \"}\""`
+	NSResponse       string `parser:"| \"set\" \"ns_response\" @String \";\""`
+	CommMode         string `parser:"| \"set\" \"comm_mode\" @String \";\""`
+
+	DNSOverHTTPS []DNSOverHTTPS `parser:"| \"dns-over-https\" @@ )* \"}\""`
 }
 
 func (b DNSBeacon) String() string {
 	return printNamed(0, "dns-beacon", b.Name, b)
 }
 
+type DNSOverHTTPS struct {
+	Name string `parser:"@Ident? \"{\""`
+
+	DohVerb        string             `parser:"( \"set\" \"doh_verb\" @String \";\""`
+	DohUserAgent   string             `parser:"| \"set\" \"doh_useragent\" @String \";\""`
+	DohProxyServer string             `parser:"| \"set\" \"doh_proxy_server\" @String \";\""`
+	DohServer      CommaSeparatedList `parser:"| \"set\" \"doh_server\" @String \";\""`
+	DohAccept      string             `parser:"| \"set\" \"doh_accept\" @String \";\""`
+	Headers        []Header           `parser:"| \"header\" @@ \";\" )* \"}\""`
+}
+
+func (b DNSOverHTTPS) String() string {
+	return printUnnamed(1, "dns-over-https", b)
+}
+
 type HTTPBeacon struct {
 	Name string `parser:"@String? \"{\""`
 
-	Library string `parser:"( \"set\" \"library\" @String \";\")* \"}\""`
+	Library            string  `parser:"( \"set\" \"library\" @String \";\""`
+	DataRequired       Boolean `parser:"| \"set\" \"data_required\" @String \";\""`
+	DataRequiredLength string  `parser:"| \"set\" \"data_required_length\" @String \";\" )* \"}\""`
 }
 
 func (b HTTPBeacon) String() string {
@@ -140,10 +163,13 @@ func (b HTTPGetClient) String() string {
 type HTTPPost struct {
 	Name string `parser:"@String? \"{\""`
 
-	Verb   string             `parser:"( \"set\" \"verb\" @String \";\""`
-	URI    SpaceSeparatedList `parser:"| \"set\" \"uri\" @String \";\""`
-	Client HTTPPostClient     `parser:"| \"client\" \"{\" @@ \"}\""`
-	Server HTTPServer         `parser:"| \"server\" \"{\" @@ \"}\" )* \"}\""`
+	Verb                   string             `parser:"( \"set\" \"verb\" @String \";\""`
+	URI                    SpaceSeparatedList `parser:"| \"set\" \"uri\" @String \";\""`
+	ClientMaxPostPostSize  int                `parser:"| \"set\" \"client_max_post_post_size\" @String \";\""`
+	ClientMaxPostGetSize   int                `parser:"| \"set\" \"client_max_post_get_size\" @String \";\""`
+	ClientMaxPostGetPacket int                `parser:"| \"set\" \"client_max_post_get_packet\" @String \";\""`
+	Client                 HTTPPostClient     `parser:"| \"client\" \"{\" @@ \"}\""`
+	Server                 HTTPServer         `parser:"| \"server\" \"{\" @@ \"}\" )* \"}\""`
 }
 
 func (b HTTPPost) String() string {
@@ -213,9 +239,21 @@ type Stage struct {
 	ModuleX86     string  `parser:"| \"set\" \"module_x86\" @String \";\""`
 	ModuleX64     string  `parser:"| \"set\" \"module_x64\" @String \";\""`
 	SyscallMethod string  `parser:"| \"set\" \"syscall_method\" @String \";\""`
+	DataStoreSize int     `parser:"| \"set\" \"data_store_size\" @String \";\""`
+	EafBypass     Boolean `parser:"| \"set\" \"eaf_bypass\" @String \";\""`
+
+	RdllLoader         string  `parser:"| \"set\" \"rdll_loader\" @String \";\""`
+	RdllUseSyscalls    Boolean `parser:"| \"set\" \"rdll_use_syscalls\" @String \";\""`
+	CopyPEHeader       Boolean `parser:"| \"set\" \"copy_pe_header\" @String \";\""`
+	RdllUseDriploading Boolean `parser:"| \"set\" \"rdll_use_driploading\" @String \";\""`
+	RdllDriploadDelay  int     `parser:"| \"set\" \"rdll_dripload_delay\" @String \";\""`
+
+	BeaconGate []Function `parser:"| \"beacon_gate\" \"{\" @@* \"}\""`
 
 	TransformX86 []Function `parser:"| \"transform-x86\" \"{\" @@* \"}\""`
 	TransformX64 []Function `parser:"| \"transform-x64\" \"{\" @@* \"}\""`
+
+	TransformObfuscate []Function `parser:"| \"transform-obfuscate\" \"{\" @@* \"}\""`
 
 	Data      []Data    `parser:"| \"data\" @String \";\""`
 	Strings   []String  `parser:"| \"string\" @String \";\""`
@@ -233,6 +271,8 @@ type ProcessInject struct {
 	MinAlloc       int     `parser:"| \"set\" \"min_alloc\" @String \";\""`
 	UseRWX         Boolean `parser:"| \"set\" \"userwx\" @String \";\""`
 	StartRWX       Boolean `parser:"| \"set\" \"startrwx\" @String \";\""`
+	UseDriploading Boolean `parser:"| \"set\" \"use_driploading\" @String \";\""`
+	DriploadDelay  int     `parser:"| \"set\" \"dripload_delay\" @String \";\""`
 
 	TransformX86 []Function `parser:"| \"transform-x86\" \"{\" @@* \"}\""`
 	TransformX64 []Function `parser:"| \"transform-x64\" \"{\" @@* \"}\""`
@@ -261,4 +301,44 @@ type PostEx struct {
 
 func (b PostEx) String() string {
 	return printUnnamed(0, "post-ex", b)
+}
+
+type HTTPHostProfiles struct {
+	Profiles []HostProfile `parser:"( @@ )*"`
+}
+
+func (b HTTPHostProfiles) String() string {
+	return printUnnamed(0, "http-host-profiles", b)
+}
+
+type HostProfile struct {
+	Name string `parser:"@Ident? \"{\""`
+
+	HostName string              `parser:"( \"set\" \"host-name\" @String \";\""`
+	HTTPGet  HostProfileHTTPGet  `parser:"| \"http-get\" \"{\" @@ \"}\""`
+	HTTPPost HostProfileHTTPPost `parser:"| \"http-post\" \"{\" @@ \"}\" )* \"}\""`
+}
+
+func (b HostProfile) String() string {
+	return printUnnamed(1, "profile", b)
+}
+
+type HostProfileHTTPGet struct {
+	URI        string      `parser:"( \"set\" \"uri\" @String \";\""`
+	Headers    []Header    `parser:"| \"header\" @@ \";\""`
+	Parameters []Parameter `parser:"| \"parameter\" @@ \";\" )*"`
+}
+
+func (b HostProfileHTTPGet) String() string {
+	return printUnnamed(2, "http-get", b) //nolint: mnd // not needed by design
+}
+
+type HostProfileHTTPPost struct {
+	URI        string      `parser:"( \"set\" \"uri\" @String \";\""`
+	Headers    []Header    `parser:"| \"header\" @@ \";\""`
+	Parameters []Parameter `parser:"| \"parameter\" @@ \";\" )*"`
+}
+
+func (b HostProfileHTTPPost) String() string {
+	return printUnnamed(2, "http-post", b) //nolint: mnd // not needed by design
 }

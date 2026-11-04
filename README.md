@@ -2,13 +2,12 @@
 
 [![PkgGoDev](https://pkg.go.dev/badge/github.com/D00Movenok/goMalleable)](https://pkg.go.dev/github.com/D00Movenok/goMalleable)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Go Report Card](https://goreportcard.com/badge/github.com/D00Movenok/goMalleable)](https://goreportcard.com/report/github.com/D00Movenok/goMalleable)
 [![Test](https://github.com/D00Movenok/goMalleable/actions/workflows/test.yml/badge.svg)](https://github.com/D00Movenok/goMalleable/actions/workflows/test.yml)
 [![CodeQL](https://github.com/D00Movenok/goMalleable/actions/workflows/codeql.yml/badge.svg)](https://github.com/D00Movenok/goMalleable/actions/workflows/codeql.yml)
 
 🔎🪲 Malleable C2 profiles parser and assembler library written in golang
 
-**Latest supported CobaltStrike version:** 4.9.1
+**Latest supported CobaltStrike version:** 4.13
 
 ## Table of Contents
 

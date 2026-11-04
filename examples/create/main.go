@@ -12,7 +12,7 @@ func main() {
 		SleepTime:  1337,
 		Jitter:     50,
 		HTTPGet: []malleable.HTTPGet{{
-			URI: malleable.URIs{
+			URI: malleable.SpaceSeparatedList{
 				"/test",
 				"/otherURI",
 			},

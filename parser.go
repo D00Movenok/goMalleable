@@ -7,6 +7,9 @@ import (
 	"github.com/alecthomas/participle/v2/lexer"
 )
 
+// NOTE: lookahead depth for the profile grammar.
+const lookahead = 5
+
 // Parse Cobalt-Strike MalleableC2 profile.
 func Parse(data io.Reader) (*Profile, error) {
 	newLexer := lexer.MustSimple([]lexer.SimpleRule{
@@ -23,7 +26,7 @@ func Parse(data io.Reader) (*Profile, error) {
 		participle.Lexer(newLexer),
 		participle.Elide("Comment", "Whitespace"),
 		participle.Unquote("String"),
-		participle.UseLookahead(5),
+		participle.UseLookahead(lookahead),
 	)
 
 	a, err := parser.Parse("", data)
